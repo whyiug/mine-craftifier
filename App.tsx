@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { MinecraftButton } from './components/MinecraftButton';
-import { MinecraftSlider } from './components/MinecraftSlider';
+import { StyleSelector } from './components/StyleSelector';
 import { generateMinecraftImage } from './services/geminiService';
-import { GenerationState } from './types';
+import { GenerationState, AnimationStyle } from './types';
 
 // Icons
 const DownloadIcon = () => (
@@ -27,7 +27,7 @@ const MagicIcon = () => (
 const App: React.FC = () => {
   const [sourceImage, setSourceImage] = useState<{base64: string, mimeType: string} | null>(null);
   const [generatedImageBase64, setGeneratedImageBase64] = useState<string | null>(null);
-  const [granularity, setGranularity] = useState<number>(5);
+  const [style, setStyle] = useState<AnimationStyle>('ghibli');
   const [appState, setAppState] = useState<GenerationState>({ status: 'idle' });
 
   const handleImageSelected = (base64: string, mimeType: string) => {
@@ -44,7 +44,7 @@ const App: React.FC = () => {
       const resultBase64 = await generateMinecraftImage(
         sourceImage.base64, 
         sourceImage.mimeType,
-        granularity
+        style
       );
       setGeneratedImageBase64(resultBase64);
       setAppState({ status: 'success' });
@@ -57,7 +57,7 @@ const App: React.FC = () => {
     if (!generatedImageBase64) return;
     const link = document.createElement('a');
     link.href = `data:image/png;base64,${generatedImageBase64}`;
-    link.download = 'minecraft-style.png';
+    link.download = 'animation-style.png';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -67,7 +67,7 @@ const App: React.FC = () => {
     setSourceImage(null);
     setGeneratedImageBase64(null);
     setAppState({ status: 'idle' });
-    setGranularity(5);
+    setStyle('ghibli');
   };
 
   return (
@@ -75,9 +75,9 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="mb-10 text-center">
         <h1 className="text-5xl md:text-7xl font-minecraft-title text-white mb-2 drop-shadow-[4px_4px_0_rgba(0,0,0,1)]">
-          MINECRAFTIFIER
+          ANIMATIONIFIER
         </h1>
-        <p className="text-2xl text-[#aaaaaa]">Pixelate your world</p>
+        <p className="text-2xl text-[#aaaaaa]">Transform your world</p>
       </header>
 
       {/* Main Content Area */}
@@ -139,7 +139,7 @@ const App: React.FC = () => {
                       
                       {generatedImageBase64 && (
                          <div className="absolute bottom-0 left-0 bg-[#5e7c16]/90 px-3 py-1 text-white font-minecraft-title text-sm">
-                            Minecraft Style
+                            Animation Style
                          </div>
                       )}
                     </div>
@@ -152,10 +152,9 @@ const App: React.FC = () => {
               
               {/* Settings */}
               <div className="w-full">
-                <MinecraftSlider 
-                  value={granularity} 
-                  onChange={setGranularity} 
-                  label="Block Size / Granularity"
+                <StyleSelector 
+                  value={style} 
+                  onChange={setStyle}
                 />
               </div>
 
@@ -167,7 +166,7 @@ const App: React.FC = () => {
                 {/* Main Generation Button (Initial) */}
                 {appState.status === 'idle' && (
                   <MinecraftButton onClick={handleGenerate} variant="secondary" className="w-full md:w-auto min-w-[240px]">
-                    Generate Blocks
+                    Generate Style
                   </MinecraftButton>
                 )}
 

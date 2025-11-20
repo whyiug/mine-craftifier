@@ -1,60 +1,87 @@
 import { GoogleGenAI, Modality } from "@google/genai";
+import { AnimationStyle } from "../types";
 
-const API_KEY = process.env.API_KEY || '';
+const API_KEY = 'AIzaSyCDm3rY6Mb3fCyoFLE6Q88VONjIykK9YzA';
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
+// Style-specific prompts for each animation style
+const STYLE_PROMPTS: Record<AnimationStyle, string> = {
+  ghibli: `Transform this image into Studio Ghibli / Hayao Miyazaki animation style:
+    - Hand-drawn watercolor aesthetic with soft, dreamy quality
+    - Warm, gentle color palette with natural lighting
+    - Detailed backgrounds with lush nature elements
+    - Expressive characters with realistic proportions
+    - Emphasis on atmosphere and emotion
+    - Soft edges and organic forms
+    - Beautiful sky and cloud details`,
+  
+  disney: `Transform this image into classic Disney animation style:
+    - Bright, vibrant colors with high saturation
+    - Clean, smooth line work
+    - Rounded, appealing character designs
+    - Fairy tale aesthetic with magical elements
+    - Expressive faces and body language
+    - Theatrical lighting and composition
+    - Optimistic and uplifting mood`,
+  
+  pixar: `Transform this image into Pixar 3D animation style:
+    - High-quality 3D rendering with detailed textures
+    - Realistic lighting and shadows
+    - Rich material properties (subsurface scattering, reflections)
+    - Appealing character proportions with squash and stretch
+    - Expressive eyes and facial features
+    - Detailed environments with depth
+    - Cinematic camera angles and composition`,
+  
+  anime: `Transform this image into Japanese anime style:
+    - Large, expressive eyes with detailed highlights
+    - Sharp, clean line work with bold outlines
+    - Vibrant colors with cel-shading
+    - Dynamic poses and action lines
+    - Exaggerated facial expressions
+    - Distinctive hair with spiky or flowing style
+    - Speed lines and visual effects for drama`,
+  
+  cartoon: `Transform this image into American cartoon style:
+    - Bold, simplified shapes and forms
+    - Exaggerated proportions and features
+    - Bright, contrasting colors
+    - Thick outlines and flat shading
+    - Humorous and playful character design
+    - Energetic poses and gestures
+    - Comic timing and visual comedy elements`
+};
+
 /**
- * Generates a Minecraft-style image based on an input image.
+ * Generates an animation-style image based on an input image and selected style.
  * @param base64Image The base64 encoded string of the source image (without data:image/... prefix)
  * @param mimeType The mime type of the image
- * @param granularity A number from 1 (coarse) to 10 (fine) representing block size.
+ * @param style The animation style to apply
  */
 export const generateMinecraftImage = async (
   base64Image: string, 
   mimeType: string,
-  granularity: number = 5
+  style: AnimationStyle = 'ghibli'
 ): Promise<string> => {
   try {
     if (!API_KEY) {
       throw new Error("API Key is missing");
     }
 
-    let resolutionDescription = "";
+    // Get the style-specific prompt
+    const stylePrompt = STYLE_PROMPTS[style];
 
-    // REVISED SCALE LOGIC:
-    // The goal is "Pixel Art" / "Mosaic".
-    // Granularity now controls the "Grid Density".
-    // Lower number = Larger Blocks (Lower Grid Resolution)
-    // Higher number = Smaller Blocks (Higher Grid Resolution)
-    
-    // Default is 5. User requested this to be "one scale larger" (coarser).
-    // Previous mapping: 5 was ~Large. 
-    // New mapping: 5 is ~32x32 grid (Very distinct blocks).
-    
-    if (granularity <= 2) {
-      resolutionDescription = "an extremely low-res 16x16 block grid (Abstract)";
-    } else if (granularity <= 4) {
-      resolutionDescription = "a low-res 24x24 block grid (Very Chunky)";
-    } else if (granularity <= 6) { 
-      // Default range
-      resolutionDescription = "a medium-low 32x32 to 40x40 block grid (Large, Distinct Blocks)";
-    } else if (granularity <= 8) {
-      resolutionDescription = "a standard 64x64 block grid (Standard Pixel Art)";
-    } else {
-      resolutionDescription = "a high-res 100x100 block grid (Detailed)";
-    }
+    const prompt = `${stylePrompt}
 
-    const prompt = `Recreate this image as a flat 2D Minecraft Map Art (Pixel Art Mosaic).
-    
-    STRICT VISUAL RULES:
-    1. **FLAT MOSAIC**: The output must be a 2D flat grid of Minecraft blocks. NO 3D perspective. NO depth. It should look like a "Map Art" created in-game.
-    2. **GRID RECONSTRUCTION**: Reconstruct the image by replacing every pixel region of the original image with a single Minecraft block texture (e.g., Wool, Concrete, Terracotta, Planks).
-    3. **RESOLUTION**: The output grid density must be ${resolutionDescription}.
-    4. **TEXTURE**: The individual texture of each block (the weave of wool, the grit of concrete) must be visible.
-    5. **NO SMOOTHING**: Do not generate smooth lines. The image must look aliased and blocky.
-    
-    Output ONLY the direct 2D pixel art image. Do not include background scenery, frames, or a player character.`;
+IMPORTANT RULES:
+1. Recreate the entire scene/subject in the specified animation style
+2. Maintain the core composition and subject matter
+3. Apply the style's characteristic visual language consistently
+4. Ensure high quality and attention to detail
+5. Output ONLY the transformed image without any frames, borders, or text overlays
+
+Create a beautiful, professional-quality transformation that captures the essence of the chosen animation style.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
