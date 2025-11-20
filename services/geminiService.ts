@@ -1,7 +1,7 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import { AnimationStyle } from "../types";
 
-const API_KEY = 'AIzaSyCDm3rY6Mb3fCyoFLE6Q88VONjIykK9YzA';
+const API_KEY = process.env.API_KEY || '';
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
